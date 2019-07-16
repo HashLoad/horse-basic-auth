@@ -27,15 +27,19 @@ begin
 end;
 
 procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: TProc);
-const
-  UNAUTHORIZED = 'Unauthorized';
 var
   LBasicAuthenticationEncode: string;
   LBasicAuthenticationDecode: TStringList;
+  LIsAuthenticated: Boolean;
 begin
   if not Req.Headers.TryGetValue(Header, LBasicAuthenticationEncode) and not Req.Query.TryGetValue(Header, LBasicAuthenticationEncode) then
   begin
-    Res.Send('Basic Authentication not found').Status(401);
+    Res.Send('Authorization not found').Status(401);
+    raise EHorseCallbackInterrupted.Create;
+  end;
+  if Pos('basic', LowerCase(LBasicAuthenticationEncode)) = 0 then
+  begin
+    Res.Send('Invalid authorization type').Status(401);
     raise EHorseCallbackInterrupted.Create;
   end;
   LBasicAuthenticationDecode := TStringList.Create;
@@ -43,21 +47,23 @@ begin
     LBasicAuthenticationDecode.Delimiter := ':';
     LBasicAuthenticationDecode.DelimitedText := TBase64Encoding.Base64.Decode(LBasicAuthenticationEncode.Replace('basic ', '', [rfIgnoreCase]));
     try
-      if not Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]) then
-        Res.Send(UNAUTHORIZED).Status(401);
-      Next();
+      LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
     except
       on E: exception do
       begin
-        if E.InheritsFrom(EHorseCallbackInterrupted) then
-          raise EHorseCallbackInterrupted(E);
-        Res.Send(UNAUTHORIZED).Status(401);
+        Res.Send(E.Message).Status(500);
         raise EHorseCallbackInterrupted.Create;
       end;
     end;
   finally
     LBasicAuthenticationDecode.Free;
   end;
+  if not LIsAuthenticated then
+  begin
+    Res.Send('Unauthorized').Status(401);
+    raise EHorseCallbackInterrupted.Create;
+  end;
+  Next();
 end;
 
 end.
