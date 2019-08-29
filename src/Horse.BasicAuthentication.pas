@@ -27,6 +27,8 @@ begin
 end;
 
 procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+const
+  BASIC_AUTH = 'Basic ';
 var
   LBasicAuthenticationEncode: string;
   LBasicAuthenticationDecode: TStringList;
@@ -37,7 +39,7 @@ begin
     Res.Send('Authorization not found').Status(401);
     raise EHorseCallbackInterrupted.Create;
   end;
-  if Pos('basic', LowerCase(LBasicAuthenticationEncode)) = 0 then
+  if not LBasicAuthenticationEncode.StartsWith(BASIC_AUTH) then
   begin
     Res.Send('Invalid authorization type').Status(401);
     raise EHorseCallbackInterrupted.Create;
@@ -45,7 +47,7 @@ begin
   LBasicAuthenticationDecode := TStringList.Create;
   try
     LBasicAuthenticationDecode.Delimiter := ':';
-    LBasicAuthenticationDecode.DelimitedText := TBase64Encoding.Base64.Decode(LBasicAuthenticationEncode.Replace('basic ', '', [rfIgnoreCase]));
+    LBasicAuthenticationDecode.DelimitedText := TBase64Encoding.Base64.Decode(LBasicAuthenticationEncode.Replace(BASIC_AUTH, '', [rfIgnoreCase]));
     try
       LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
     except
