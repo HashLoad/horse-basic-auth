@@ -28,7 +28,7 @@ end;
 
 procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: TProc);
 const
-  BASIC_AUTH = 'Basic ';
+  BASIC_AUTH = 'basic ';
 var
   LBasicAuthenticationEncode: string;
   LBasicAuthenticationDecode: TStringList;
@@ -39,7 +39,7 @@ begin
     Res.Send('Authorization not found').Status(401);
     raise EHorseCallbackInterrupted.Create;
   end;
-  if not LBasicAuthenticationEncode.StartsWith(BASIC_AUTH) then
+  if not LBasicAuthenticationEncode.ToLower.StartsWith(BASIC_AUTH) then
   begin
     Res.Send('Invalid authorization type').Status(401);
     raise EHorseCallbackInterrupted.Create;
