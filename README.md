@@ -6,7 +6,7 @@ Sample Horse server validate basic authentication:
 
 ```delphi
 uses
-  Horse, Horse.BasicAuthentication;
+  Horse, Horse.BasicAuthentication, System.SysUtils;
 
 var
   App: THorse;
@@ -23,7 +23,7 @@ begin
   App.Post('ping',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     begin
-      Req.Send('pong');
+      Res.Send('pong');
     end);
 
   App.Start;
