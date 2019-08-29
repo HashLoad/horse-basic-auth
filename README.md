@@ -20,7 +20,7 @@ begin
       Result := AUsername.Equals('user') and APassword.Equals('password');
     end));
 
-  App.Post('ping',
+  App.Get('ping',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     begin
       Res.Send('pong');
