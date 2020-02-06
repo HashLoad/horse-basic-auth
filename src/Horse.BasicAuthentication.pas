@@ -34,7 +34,8 @@ var
   LBasicAuthenticationDecode: TStringList;
   LIsAuthenticated: Boolean;
 begin
-  if not Req.Headers.TryGetValue(Header, LBasicAuthenticationEncode) and not Req.Query.TryGetValue(Header, LBasicAuthenticationEncode) then
+  LBasicAuthenticationEncode := Req.Headers[Header];
+  if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Header, LBasicAuthenticationEncode) then
   begin
     Res.Send('Authorization not found').Status(401);
     raise EHorseCallbackInterrupted.Create;
