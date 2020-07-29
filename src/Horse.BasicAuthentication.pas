@@ -2,7 +2,7 @@ unit Horse.BasicAuthentication;
 
 interface
 
-uses Horse, System.SysUtils, System.NetEncoding, System.Classes;
+uses Horse, Horse.Commons, System.SysUtils, System.NetEncoding, System.Classes;
 
 const
   AUTHORIZATION = 'authorization';
@@ -37,12 +37,12 @@ begin
   LBasicAuthenticationEncode := Req.Headers[Header];
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Header, LBasicAuthenticationEncode) then
   begin
-    Res.Send('Authorization not found').Status(401);
+    Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
   if not LBasicAuthenticationEncode.ToLower.StartsWith(BASIC_AUTH) then
   begin
-    Res.Send('Invalid authorization type').Status(401);
+    Res.Send('Invalid authorization type').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
   LBasicAuthenticationDecode := TStringList.Create;
@@ -54,7 +54,7 @@ begin
     except
       on E: exception do
       begin
-        Res.Send(E.Message).Status(500);
+        Res.Send(E.Message).Status(THTTPStatus.InternalServerError);
         raise EHorseCallbackInterrupted.Create;
       end;
     end;
@@ -63,7 +63,7 @@ begin
   end;
   if not LIsAuthenticated then
   begin
-    Res.Send('Unauthorized').Status(401);
+    Res.Send('Unauthorized').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
   Next();
