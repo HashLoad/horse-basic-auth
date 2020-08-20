@@ -1,16 +1,25 @@
 unit Horse.BasicAuthentication;
-
+{$IF DEFINED(FPC)}
+{$MODE DELPHI}{$H+}
+{$ENDIF}
 interface
 
-uses Horse, Horse.Commons, System.SysUtils, System.NetEncoding, System.Classes;
+uses
+  {$IF DEFINED(FPC)}
+    SysUtils, base64, Classes,
+  {$ELSE}
+    System.SysUtils, System.NetEncoding, System.Classes,
+  {$ENDIF}
+
+  Horse, Horse.Commons;
 
 const
   AUTHORIZATION = 'authorization';
 
 type
-  THorseBasicAuthentication = reference to function(const AUsername, APassword: string): Boolean;
+  THorseBasicAuthentication = {$IF NOT DEFINED(FPC)} reference to {$ENDIF} function(const AUsername, APassword: string): Boolean;
 
-procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)} TNextProc {$ELSE} TProc {$ENDIF} );
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication; const AHeader: string = AUTHORIZATION): THorseCallback;
 
 implementation
@@ -26,11 +35,12 @@ begin
   Result := Middleware;
 end;
 
-procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)} TNextProc {$ELSE} TProc {$ENDIF});
 const
   BASIC_AUTH = 'basic ';
 var
   LBasicAuthenticationEncode: string;
+  LBase64String: string;
   LBasicAuthenticationDecode: TStringList;
   LIsAuthenticated: Boolean;
 begin
@@ -48,7 +58,8 @@ begin
   LBasicAuthenticationDecode := TStringList.Create;
   try
     LBasicAuthenticationDecode.Delimiter := ':';
-    LBasicAuthenticationDecode.DelimitedText := TBase64Encoding.Base64.Decode(LBasicAuthenticationEncode.Replace(BASIC_AUTH, '', [rfIgnoreCase]));
+    LBase64String := LBasicAuthenticationEncode.Replace(BASIC_AUTH, '', [rfIgnoreCase]);
+    LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.Base64.Decode(LBase64String){$ENDIF};
     try
       LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
     except
