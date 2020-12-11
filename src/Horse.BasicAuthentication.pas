@@ -53,7 +53,7 @@ begin
     {$IF DEFINED(FPC)}
       .WWWAuthenticate := Format('Basic realm=%s', [RealmMessage]);
     {$ELSE}
-      .Res.Realm := RealmMessage;
+      .Realm := RealmMessage;
     {$ENDIF}
     raise EHorseCallbackInterrupted.Create;
   end;
