@@ -49,12 +49,7 @@ begin
   LBasicAuthenticationEncode := Req.Headers[Header];
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Header, LBasicAuthenticationEncode) then
   begin
-    Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized).RawWebResponse
-    {$IF DEFINED(FPC)}
-      .WWWAuthenticate := Format('Basic realm=%s', [RealmMessage]);
-    {$ELSE}
-      .Res.Realm := RealmMessage;
-    {$ENDIF}
+    Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized).RawWebResponse{$IF DEFINED(FPC)}.WWWAuthenticate := Format('Basic realm=%s', [RealmMessage]); {$ELSE}.Realm := RealmMessage;  {$ENDIF})
     raise EHorseCallbackInterrupted.Create;
   end;
   if not LBasicAuthenticationEncode.ToLower.StartsWith(BASIC_AUTH) then
