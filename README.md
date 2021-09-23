@@ -1,18 +1,44 @@
 # horse-basic-auth
+<b>horse-basic-auth</b> is a official middleware for working with basic authentication in APIs developed with the <a href="https://github.com/HashLoad/horse">Horse</a> framework.
+<br>We created a channel on Telegram for questions and support:<br><br>
+<a href="https://t.me/hashload">
+  <img src="https://img.shields.io/badge/telegram-join%20channel-7289DA?style=flat-square">
+</a>
 
-Middleware for Basic Authentication in HORSE
+## ⚙️ Installation
+Installation is done using the [`boss install`](https://github.com/HashLoad/boss) command:
+``` sh
+$ boss install horse-basic-auth
+```
+If you choose to install manually, simply add the following folders to your project, in *Project > Options > Resource Compiler > Directories and Conditionals > Include file search path*
+```
+../horse-basic-auth/src
+```
 
-Sample Horse server validate basic authentication:
+## ✔️ Compatibility
+This middleware is compatible with projects developed in:
+- [X] Delphi
+- [X] Lazarus
 
+## ⚡️ Quickstart
 ```delphi
-uses Horse, Horse.BasicAuthentication, System.SysUtils;
+uses 
+  Horse, 
+  Horse.BasicAuthentication, // It's necessary to use the unit
+  System.SysUtils;
 
 begin
+  // It's necessary to add the middleware in the Horse:
   THorse.Use(HorseBasicAuthentication(
     function(const AUsername, APassword: string): Boolean
     begin
+      // Here inside you can access your database and validate if username and password are valid
       Result := AUsername.Equals('user') and APassword.Equals('password');
     end));
+    
+  // The default header for receiving credentials is "Authorization".
+  // You can change, if necessary:
+  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, 'X-My-Header-Authorization'));  
 
   THorse.Get('/ping',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
@@ -21,5 +47,13 @@ begin
     end);
 
   THorse.Listen(9000);
-end.
+end;
 ```
+
+## 📌 Status Code
+This middleware can return the following status code:
+* [401](https://httpstatuses.com/401) - Unauthorized
+* [500](https://httpstatuses.com/500) - InternalServerError
+
+## ⚠️ License
+`horse-basic-auth` is free and open-source middleware licensed under the [MIT License](https://github.com/HashLoad/horse-basic-auth/blob/master/LICENSE). 
