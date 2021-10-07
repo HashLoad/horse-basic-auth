@@ -1,7 +1,9 @@
 unit Horse.BasicAuthentication;
+
 {$IF DEFINED(FPC)}
-{$MODE DELPHI}{$H+}
+  {$MODE DELPHI}{$H+}
 {$ENDIF}
+
 interface
 
 uses
@@ -10,7 +12,6 @@ uses
   {$ELSE}
     System.SysUtils, System.NetEncoding, System.Classes,
   {$ENDIF}
-
   Horse, Horse.Commons;
 
 const
@@ -65,6 +66,7 @@ begin
   LBasicAuthenticationDecode := TStringList.Create;
   try
     LBasicAuthenticationDecode.Delimiter := ':';
+    LBasicAuthenticationDecode.StrictDelimiter := True;
     LBase64String := LBasicAuthenticationEncode.Replace(BASIC_AUTH, '', [rfIgnoreCase]);
     LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.Base64.Decode(LBase64String){$ENDIF};
     try
