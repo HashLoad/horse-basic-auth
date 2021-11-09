@@ -19,7 +19,10 @@ begin
 
   // The default header for receiving credentials is "Authorization".
   // You can change, if necessary:
-  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, 'X-My-Header-Authorization'));
+  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, THorseBasicAuthenticationConfig.New.Header('X-My-Header-Authorization')));
+
+  // You can also ignore routes:
+  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, THorseBasicAuthenticationConfig.New.SkipRoutes(['/ping'])));
 
   THorse.Get('/ping',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
@@ -27,5 +30,9 @@ begin
       Res.Send('pong');
     end);
 
-  THorse.Listen(9000);
+  THorse.Listen(9000,
+    procedure(Horse: THorse)
+    begin
+      Writeln(Format('Server is runing on port %d', [Horse.Port]));
+    end);
 end.

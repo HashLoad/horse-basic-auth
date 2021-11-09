@@ -17,7 +17,7 @@ end;
 
 procedure OnListen(Horse: THorse);
 begin
-  Writeln(Format('Server is runing on %s:%d', [Horse.Host, Horse.Port]));
+  Writeln(Format('Server is runing on port %d', [Horse.Port]));
 end;
 
 function DoLogin(const AUsername, APassword: string): Boolean;
@@ -32,7 +32,10 @@ begin
 
   // The default header for receiving credentials is "Authorization".
   // You can change, if necessary:
-  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, 'X-My-Header-Authorization'));
+  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, THorseBasicAuthenticationConfig.New.Header('X-My-Header-Authorization')));
+
+  // You can also ignore routes:
+  // THorse.Use(HorseBasicAuthentication(MyCallbackValidation, THorseBasicAuthenticationConfig.New.SkipRoutes(['/ping'])));
 
   THorse.Get('/ping', GetPing);
 
