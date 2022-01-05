@@ -1,21 +1,21 @@
 unit Horse.BasicAuthentication;
 
 {$IF DEFINED(FPC)}
-  {$MODE DELPHI}{$H+}
+{$MODE DELPHI}{$H+}
 {$ENDIF}
 
 interface
 
 uses
-  {$IF DEFINED(FPC)}
-    SysUtils, StrUtils, base64, Classes,
-  {$ELSE}
-    System.SysUtils, System.NetEncoding, System.Classes, System.StrUtils,
-  {$ENDIF}
+{$IF DEFINED(FPC)}
+  SysUtils, StrUtils, base64, Classes,
+{$ELSE}
+  System.SysUtils, System.NetEncoding, System.Classes, System.StrUtils,
+{$ENDIF}
   Horse, Horse.Commons;
 
 const
-  AUTHORIZATION = 'authorization';
+  AUTHORIZATION = 'Authorization';
   REALM_MESSAGE = 'Enter credentials';
 
 type
@@ -48,7 +48,7 @@ type
 type
   THorseBasicAuthentication = {$IF NOT DEFINED(FPC)} reference to {$ENDIF} function(const AUsername, APassword: string): Boolean;
 
-procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)} TNextProc {$ELSE} TProc {$ENDIF} );
+procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)} TNextProc {$ELSE} TProc {$ENDIF});
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication): THorseCallback; overload;
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication; const AConfig: IHorseBasicAuthenticationConfig): THorseCallback; overload;
 
@@ -85,28 +85,35 @@ begin
     Exit;
   end;
 
-  LBasicAuthenticationEncode := Req.Headers[Config.Header];
+  LBasicAuthenticationEncode := '';
+  if Req.Headers.ContainsKey(Config.Header) then
+    LBasicAuthenticationEncode := Req.Headers.Items[Config.Header];
+
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Config.Header, LBasicAuthenticationEncode) then
   begin
     Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized).RawWebResponse
-    {$IF DEFINED(FPC)}
+{$IF DEFINED(FPC)}
       .WWWAuthenticate := Format('Basic realm=%s', [Config.RealmMessage]);
-    {$ELSE}
+{$ELSE}
       .Realm := Config.RealmMessage;
-    {$ENDIF}
+{$ENDIF}
+
     raise EHorseCallbackInterrupted.Create;
   end;
-  if not LBasicAuthenticationEncode.ToLower.StartsWith(BASIC_AUTH) then
-  begin
+
+  if not LBasicAuthenticationEncode.Trim.ToLower.StartsWith(BASIC_AUTH) then
+  begin 
     Res.Send('Invalid authorization type').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
+
   LBasicAuthenticationDecode := TStringList.Create;
   try
     LBasicAuthenticationDecode.Delimiter := ':';
     LBasicAuthenticationDecode.StrictDelimiter := True;
-    LBase64String := LBasicAuthenticationEncode.Replace(BASIC_AUTH, '', [rfIgnoreCase]);
-    LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.Base64.Decode(LBase64String){$ENDIF};
+    LBase64String := LBasicAuthenticationEncode.Trim.Replace(BASIC_AUTH, '', [rfIgnoreCase]);
+    LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.base64.Decode(LBase64String){$ENDIF};
+
     try
       LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
     except
@@ -119,11 +126,13 @@ begin
   finally
     LBasicAuthenticationDecode.Free;
   end;
+
   if not LIsAuthenticated then
   begin
     Res.Send('Unauthorized').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
+
   Next();
 end;
 
