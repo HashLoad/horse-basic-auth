@@ -85,9 +85,7 @@ begin
     Exit;
   end;
 
-  LBasicAuthenticationEncode := '';
-  if Req.Headers.ContainsKey(Config.Header) then
-    LBasicAuthenticationEncode := Req.Headers.Items[Config.Header];
+  LBasicAuthenticationEncode := Req.Headers[Config.Header];
 
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Config.Header, LBasicAuthenticationEncode) then
   begin
