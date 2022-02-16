@@ -78,8 +78,12 @@ var
   LBase64String: string;
   LBasicAuthenticationDecode: TStringList;
   LIsAuthenticated: Boolean;
+  LPathInfo: string;
 begin
-  if MatchText(Req.RawWebRequest.PathInfo, Config.SkipRoutes) then
+  LPathInfo := Req.RawWebRequest.PathInfo;
+  if LPathInfo = EmptyStr then
+    LPathInfo := '/';
+  if MatchText(LPathInfo, Config.SkipRoutes) then
   begin
     Next();
     Exit;
