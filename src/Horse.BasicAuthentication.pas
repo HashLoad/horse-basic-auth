@@ -1,7 +1,7 @@
 unit Horse.BasicAuthentication;
 
 {$IF DEFINED(FPC)}
-{$MODE DELPHI}{$H+}
+  {$MODE DELPHI}{$H+}
 {$ENDIF}
 
 interface
@@ -26,6 +26,7 @@ type
     function RealmMessage(const AValue: string): IHorseBasicAuthenticationConfig; overload;
     function RealmMessage: string; overload;
     function SkipRoutes(const AValues: TArray<string>): IHorseBasicAuthenticationConfig; overload;
+    function SkipRoutes(const AValue: string): IHorseBasicAuthenticationConfig; overload;
     function SkipRoutes: TArray<string>; overload;
   end;
 
@@ -39,6 +40,7 @@ type
     function RealmMessage(const AValue: string): IHorseBasicAuthenticationConfig; overload;
     function RealmMessage: string; overload;
     function SkipRoutes(const AValues: TArray<string>): IHorseBasicAuthenticationConfig; overload;
+    function SkipRoutes(const AValue: string): IHorseBasicAuthenticationConfig; overload;
     function SkipRoutes: TArray<string>; overload;
   public
     constructor Create;
@@ -94,11 +96,11 @@ begin
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Config.Header, LBasicAuthenticationEncode) then
   begin
     Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized).RawWebResponse
-{$IF DEFINED(FPC)}
+      {$IF DEFINED(FPC)}
       .WWWAuthenticate := Format('Basic realm=%s', [Config.RealmMessage]);
-{$ELSE}
+      {$ELSE}
       .Realm := Config.RealmMessage;
-{$ENDIF}
+      {$ENDIF}
 
     raise EHorseCallbackInterrupted.Create;
   end;
@@ -172,6 +174,11 @@ end;
 function THorseBasicAuthenticationConfig.RealmMessage: string;
 begin
   Result := FRealmMessage;
+end;
+
+function THorseBasicAuthenticationConfig.SkipRoutes(const AValue: string): IHorseBasicAuthenticationConfig;
+begin
+  Result := SkipRoutes([AValue]);
 end;
 
 function THorseBasicAuthenticationConfig.SkipRoutes(const AValues: TArray<string>): IHorseBasicAuthenticationConfig;
