@@ -1,18 +1,23 @@
 unit Horse.BasicAuthentication;
 
 {$IF DEFINED(FPC)}
-  {$MODE DELPHI}{$H+}
+{$MODE DELPHI}{$H+}
 {$ENDIF}
 
 interface
 
 uses
 {$IF DEFINED(FPC)}
-  SysUtils, StrUtils, base64, Classes,
+  SysUtils,
+  base64,
+  Classes,
 {$ELSE}
-  System.SysUtils, System.NetEncoding, System.Classes, System.StrUtils,
+  System.SysUtils,
+  System.NetEncoding,
+  System.Classes,
 {$ENDIF}
-  Horse, Horse.Commons;
+  Horse,
+  Horse.Commons;
 
 const
   AUTHORIZATION = 'Authorization';
@@ -85,7 +90,7 @@ begin
   LPathInfo := Req.RawWebRequest.PathInfo;
   if LPathInfo = EmptyStr then
     LPathInfo := '/';
-  if MatchText(LPathInfo, Config.SkipRoutes) then
+  if MatchRoute(LPathInfo, Config.SkipRoutes) then
   begin
     Next();
     Exit;
@@ -96,17 +101,16 @@ begin
   if LBasicAuthenticationEncode.Trim.IsEmpty and not Req.Query.TryGetValue(Config.Header, LBasicAuthenticationEncode) then
   begin
     Res.Send('Authorization not found').Status(THTTPStatus.Unauthorized).RawWebResponse
-      {$IF DEFINED(FPC)}
+{$IF DEFINED(FPC)}
       .WWWAuthenticate := Format('Basic realm=%s', [Config.RealmMessage]);
-      {$ELSE}
+{$ELSE}
       .Realm := Config.RealmMessage;
-      {$ENDIF}
-
+{$ENDIF}
     raise EHorseCallbackInterrupted.Create;
   end;
 
   if not LBasicAuthenticationEncode.Trim.ToLower.StartsWith(BASIC_AUTH) then
-  begin 
+  begin
     Res.Send('Invalid authorization type').Status(THTTPStatus.Unauthorized);
     raise EHorseCallbackInterrupted.Create;
   end;
