@@ -10,14 +10,14 @@ uses
   Horse.BasicAuthentication, // It's necessary to use the unit
   SysUtils;
 
-procedure GetPing(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
+procedure GetPing(Req: THorseRequest; Res: THorseResponse);
 begin
   Res.Send('Pong');
 end;
 
-procedure OnListen(Horse: THorse);
+procedure OnListen;
 begin
-  Writeln(Format('Server is runing on port %d', [Horse.Port]));
+  Writeln(Format('Server is runing on port %d', [THorse.Port]));
 end;
 
 function DoLogin(const AUsername, APassword: string): Boolean;
