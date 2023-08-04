@@ -54,18 +54,27 @@ type
 
 type
   THorseBasicAuthentication = {$IF NOT DEFINED(FPC)} reference to {$ENDIF} function(const AUsername, APassword: string): Boolean;
+  THorseBasicAuthenticationWithResponse = {$IF NOT DEFINED(FPC)} reference to {$ENDIF} function(const AUsername, APassword: string; ARes: THorseResponse): Boolean;
 
 procedure Middleware(Req: THorseRequest; Res: THorseResponse; Next: {$IF DEFINED(FPC)} TNextProc {$ELSE} TProc {$ENDIF});
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication): THorseCallback; overload;
+function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthenticationWithResponse): THorseCallback; overload;
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication; const AConfig: IHorseBasicAuthenticationConfig): THorseCallback; overload;
+function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthenticationWithResponse; const AConfig: IHorseBasicAuthenticationConfig): THorseCallback; overload;
 
 implementation
 
 var
   Config: IHorseBasicAuthenticationConfig;
   Authenticate: THorseBasicAuthentication;
+  AuthenticateWithResponse: THorseBasicAuthenticationWithResponse;
 
 function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication): THorseCallback;
+begin
+  Result := HorseBasicAuthentication(AAuthenticate, THorseBasicAuthenticationConfig.New);
+end;
+
+function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthenticationWithResponse): THorseCallback; overload;
 begin
   Result := HorseBasicAuthentication(AAuthenticate, THorseBasicAuthenticationConfig.New);
 end;
@@ -74,6 +83,13 @@ function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthentication
 begin
   Config := AConfig;
   Authenticate := AAuthenticate;
+  Result := Middleware;
+end;
+
+function HorseBasicAuthentication(const AAuthenticate: THorseBasicAuthenticationWithResponse; const AConfig: IHorseBasicAuthenticationConfig): THorseCallback; overload;
+begin
+  Config := AConfig;
+  AuthenticateWithResponse := AAuthenticate;
   Result := Middleware;
 end;
 
@@ -126,7 +142,14 @@ begin
     LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.base64.Decode(LBase64String){$ENDIF};
 
     try
-      LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
+      if Assigned(AuthenticateWithResponse) then
+      begin
+        LIsAuthenticated := AuthenticateWithResponse(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1], Res);
+      end
+      else
+      begin
+        LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
+      end;
     except
       on E: exception do
       begin
