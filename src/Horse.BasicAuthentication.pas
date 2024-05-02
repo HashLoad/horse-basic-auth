@@ -152,6 +152,11 @@ begin
         LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
       end;
     except
+      on E: EEncodingError do
+      begin
+        Res.Send('Erro na conversão do Base64. Certifique-se de que a string Base64 está correta.').Status(THTTPStatus.InternalServerError);
+        raise EHorseCallbackInterrupted.Create;
+      end;
       on E: exception do
       begin
         Res.Send(E.Message).Status(THTTPStatus.InternalServerError);
