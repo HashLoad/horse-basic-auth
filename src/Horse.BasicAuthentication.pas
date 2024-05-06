@@ -139,9 +139,10 @@ begin
     LBasicAuthenticationDecode.Delimiter := ':';
     LBasicAuthenticationDecode.StrictDelimiter := True;
     LBase64String := LBasicAuthenticationEncode.Trim.Replace(BASIC_AUTH, '', [rfIgnoreCase]);
-    LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.base64.Decode(LBase64String){$ENDIF};
 
     try
+      LBasicAuthenticationDecode.DelimitedText := {$IF DEFINED(FPC)}DecodeStringBase64(LBase64String){$ELSE}TBase64Encoding.base64.Decode(LBase64String){$ENDIF};
+	  
       if Assigned(AuthenticateWithResponse) then
       begin
         LIsAuthenticated := AuthenticateWithResponse(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1], Res);
@@ -151,6 +152,11 @@ begin
         LIsAuthenticated := Authenticate(LBasicAuthenticationDecode.Strings[0], LBasicAuthenticationDecode.Strings[1]);
       end;
     except
+      on E: EEncodingError do
+      begin
+        Res.Send('Base64 conversion error. Make sure that the Base64 string is correct.').Status(THTTPStatus.InternalServerError);
+        raise EHorseCallbackInterrupted.Create;
+      end;
       on E: exception do
       begin
         Res.Send(E.Message).Status(THTTPStatus.InternalServerError);
